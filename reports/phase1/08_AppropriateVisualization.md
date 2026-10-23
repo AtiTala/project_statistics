@@ -13,3 +13,12 @@ Figures:
 4. Weekend/non-workday sleep duration by reported supplement-use status.
 
 Source: NHANES sleep questionnaire documentation for the interpretation of sleep-duration values ([SLQ_L documentation](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/SLQ_L.htm)).
+### Figures
+
+![Figure 1. Usual weekday/workday sleep-duration distribution among adults aged 20 years or older.](../../figures/fig1_weekday_sleep_distribution.png)
+
+![Figure 2. Usual weekend/non-workday sleep-duration distribution among adults aged 20 years or older.](../../figures/fig2_weekend_sleep_distribution.png)
+
+![Figure 3. Weekday/workday sleep duration by reported supplement-use status.](../../figures/fig3_weekday_sleep_by_supplement.png)
+
+![Figure 4. Weekend/non-workday sleep duration by reported supplement-use status.](../../figures/fig4_weekend_sleep_by_supplement.png)

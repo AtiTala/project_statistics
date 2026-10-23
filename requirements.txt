@@ -3,4 +3,4 @@ pyreadstat
 jupyter
 matplotlib
 seaborn
-pyarrow
+reportlab

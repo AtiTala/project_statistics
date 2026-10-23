@@ -8,7 +8,7 @@ The summaries below use the same preliminary, unweighted dataset as in Section 6
 | Weekend/non-workday sleep (`SLD013`), hours | 5,998 | 8.26 | 1.71 | 8.0 | 7.5 | 9.0 | 1.5 | 2 = less than 3 hours; 14 = 14 hours or more |
 | Age at screening (`RIDAGEYR`), years | 6,064 | 53.85 | 17.18 | 57.0 | 39.0 | 68.0 | 29.0 | 20 to 80; 80 represents 80 years or older |
 
-/ For the sleep variables, the mean and standard deviation were calculated using the numeric values as released by NHANES. Because the endpoint codes 2 and 14 represent grouped durations rather than exact values, these mean and SD estimates are approximate summaries of the released codes. The median and IQR are emphasized because they describe the center and middle spread without relying strongly on those extreme endpoint values.
+For the sleep variables, the mean and standard deviation were calculated using the numeric values as released by NHANES. Because the endpoint codes 2 and 14 represent grouped durations rather than exact values, these mean and SD estimates are approximate summaries of the released codes. The median and IQR are emphasized because they describe the center and middle spread without relying strongly on those extreme endpoint values.
 
 The weekday and weekend sleep medians are both 8 hours, and both IQRs are 1.5 hours. The weekend mean based on the released codes is higher than the weekday mean, and the weekend upper quartile is 9 hours compared with 8.5 hours on weekdays. These are descriptive differences only; no inferential claim is made at this stage.
 
