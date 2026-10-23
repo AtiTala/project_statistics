@@ -1,6 +1,6 @@
 ## 8. Appropriate Visualization
 
-Four unweighted figures were prepared for the preliminary adult sample. The first two show the empirical distributions of usual weekday and weekend sleep duration. The other two compare sleep duration by reported supplement-use status.
+Four unweighted figures were prepared for adults aged 20 years or older with a valid yes/no response for supplement use. The figures do not require a positive `WTDRD1` weight. The first two show the empirical distributions of usual weekday and weekend sleep duration. The other two compare sleep duration by reported supplement-use status. This exploratory figure sample is therefore slightly larger than the positive-weight analytic sample defined in A4.
 
 The weekday and weekend distribution plots use percentages and show each reported sleep-duration value. NHANES endpoint codes are labelled as “<3” and “14+” because they represent grouped durations, not exact values of 2 and 14 hours. The supplement-group boxplots compare only reported numeric sleep values from 3 to 13.5 hours; the grouped endpoint categories are excluded. Outlier markers are omitted from the boxplots for readability.
 

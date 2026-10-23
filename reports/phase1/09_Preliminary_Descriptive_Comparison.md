@@ -1,6 +1,6 @@
 ## 9. Preliminary Descriptive Comparison
 
-Usual sleep duration was compared between adults who reported dietary supplement use in the past 30 days and adults who reported no use. The comparison is unweighted and descriptive. It uses reported sleep values from 3 to 13.5 hours; missing sleep values and the NHANES grouped endpoint categories (“less than 3 hours” and “14 hours or more”) are excluded because the endpoint codes do not represent exact durations.
+Usual sleep duration was compared between adults who reported dietary supplement use in the past 30 days and adults who reported no use. The comparison is unweighted and descriptive. It includes adults with a valid yes/no response for `DSD010`, regardless of whether `WTDRD1` is positive. Thus, the weekday comparison includes 4,702 participants and the weekend comparison includes 4,693. A4 reports the slightly smaller positive-weight analytic samples (4,699 and 4,690, respectively), which are used for the weighted summaries in A3. It uses reported sleep values from 3 to 13.5 hours; missing sleep values and the NHANES grouped endpoint categories (“less than 3 hours” and “14 hours or more”) are excluded because the endpoint codes do not represent exact durations.
 
 | Sleep variable | Supplement use reported: n | Median (Q1, Q3) | No supplement use reported: n | Median (Q1, Q3) |
 |---|---:|---:|---:|---:|
