@@ -1,36 +1,47 @@
 ## 2. Unit of Observation and Data Structure
 
-A row represents one record, but the type of record depends on the file. The participant-level files have one row per respondent. The supplement-use file has one row per reported product or antacid, so one participant may appear in several rows. The supplement-reference files have rows for products, ingredients, or blend components.
+The NHANES files used in this project do not all have the same row structure. Some files contain participant-level records, while others contain product or ingredient records.
 
-| File | Rows in downloaded file | What one row represents | Repeated records? |
+| File | Rows in the downloaded file | What one row represents | Repeated identifiers in this file |
 |---|---:|---|---|
-| `DEMO_L` | 11,933 | One NHANES participant | No repeated `SEQN` values |
-| `SLQ_L` | 8,501 | One participant’s sleep questionnaire record | No repeated `SEQN` values |
-| `DSQTOT_L` | 8,860 | One participant’s total supplement-use record, including users and non-users | No repeated `SEQN` values |
-| `DSQIDS_L` | 11,375 | One supplement or antacid reported by a participant | Yes. The file contains 4,017 distinct participants; 2,506 have multiple records, and one participant has up to 30 records |
-| `DSPI` | 20,235 | One supplement product in the product-reference database | No repeated `DSDPID` values |
-| `DSII` | 188,552 | One ingredient entry associated with a supplement product | Yes. A product may have many ingredient entries |
-| `DSBI` | 37,061 | One component listed within a supplement blend | Yes. A blend may have many listed components |
 
-For the main analysis, the **participant is the unit of observation**, because sleep duration is measured for each person. Before analysis, supplement reports must therefore be organized into participant-level exposure information. The product and ingredient files provide the detail needed to identify what was reported.
+| `DEMO_L` | 11,933 | One NHANES participant, identified by `SEQN` | None; `SEQN` is unique |
+| `SLQ_L` | 8,501 | One participant’s sleep-questionnaire record | None; `SEQN` is unique |
+| `DSQTOT_L` | 8,860 | One participant’s total supplement-use record | None; `SEQN` is unique |
+| `DSQIDS_L` | 11,375 | One supplement or antacid product reported by a participant | Yes. There are 4,017 distinct participants; 2,506 have multiple product records, and one participant has up to 30 |
+| `DSPI` | 20,235 | One supplement product in the product-reference file | None; `DSDPID` is unique |
+| `DSII` | 188,552 | One ingredient entry associated with a supplement product | Yes. A product can have multiple ingredient entries |
+| `DSBI` | 37,061 | One component entry associated with a supplement blend | Yes. A blend can have multiple component entries |
 
-The files are connected through identifiers. `SEQN` identifies participants and connects the participant-level data to their supplement reports. `DSDPID` connects a reported supplement product to its product and ingredient information. `DSDIID` connects an ingredient that is a blend to the components listed for that blend.
+*The row counts above are counts in the downloaded files used for this project. They describe file records, not necessarily the number of participants eligible for the final analysis.*
 
+### Unit of observation for the main analysis
 
+The **participant is the unit of observation in the main analysis**. The research question concerns a person’s reported sleep duration in relation to that person’s supplement-use information. Therefore, the final analysis dataset should contain no more than one row per participant.
 
+The `DSQIDS_L` file is different: each row represents a **reported product**, so one participant may appear on multiple rows. Before using these records to describe a participant’s supplement exposure, the product reports must be summarized at the participant level. The product and ingredient reference files help identify reported products and their ingredients; they are not additional participant observations.
 
-Participant-level records
-DEMO_L ─┐
-SLQ_L  ─┼── SEQN ── DSQIDS_L: one row per reported product or antacid
-DSQTOT_L┘                           │
-                                    └── DSDPID ── DSPI: product information
-                                                └── DSII: ingredient entries
-                                                       │
-                                                       └── DSDIID ── DSBI: blend components
+### How the files relate
 
+The participant files are linked using `SEQN`. Supplement product reports are linked to product and ingredient reference information using `DSDPID`; blend-component information is linked using `DSDIID`.
 
+    DEMO_L ─┐
+    SLQ_L   ├── SEQN ── participant-level analysis record
+    DSQTOT_L┘                 │
+                              └── SEQN ── DSQIDS_L
+                                          one row per reported product
+                                                  │
+                                                DSDPID
+                                                  │
+                                      ┌───────────┴───────────┐
+                                      DSPI                  DSII
+                                                       ingredient entries
+                                                             │
+                                                           DSDIID
+                                                             │
+                                                            DSBI
+                                                    blend-component entries
 
+The row counts differ because the files describe different records and may cover different sets of participants or products. A direct merge of all files without checking their structure could create multiple rows for the same participant—for example, when a participant has several supplement records or a product has several ingredient records. The merge steps must therefore preserve the participant as the analysis unit, and the number of participants and rows should be checked before and after each merge.
 
-The row counts differ across files because each file covers a different type of record and may have different eligibility or completion requirements. These differences do not, by themselves, indicate an error. Before analysis, the merge process and the number of participants retained at each step must be checked and reported.
-
-Sources: CDC/NHANES documentation for [`DEMO_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DEMO_L.htm), [`SLQ_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/SLQ_L.htm), [`DSQIDS_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQIDS_L.htm), [`DSQTOT_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQTOT_L.htm), [`DSPI`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSPI.htm), [`DSII`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSII.htm), and [`DSBI`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSBI.htm).
+Sources: CDC/NCHS documentation for [`DEMO_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DEMO_L.htm), [`SLQ_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/SLQ_L.htm), [`DSQIDS_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQIDS_L.htm), [`DSQTOT_L`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQTOT_L.htm), [`DSPI`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSPI.htm), [`DSII`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSII.htm), and [`DSBI`](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSBI.htm).

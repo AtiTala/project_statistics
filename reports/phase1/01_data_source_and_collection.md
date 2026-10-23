@@ -1,48 +1,12 @@
-# Data Documentation
+## 1. Data Source and Collection Mechanism
 
-## Project data source
+This project uses public-use data from the National Health and Nutrition Examination Survey (NHANES), conducted by the National Center for Health Statistics (NCHS), part of the U.S. Centers for Disease Control and Prevention (CDC). The participant data used in this project were collected during the August 2021–August 2023 cycle.
 
-Participant data come from the U.S. National Health and Nutrition Examination Survey (NHANES), conducted by the National Center for Health Statistics (NCHS), part of the Centers for Disease Control and Prevention (CDC).
+NHANES is a cross-sectional, observational health survey of the U.S. civilian, noninstitutionalized population. It uses a multistage probability-sampling design to select participants from households across the United States. Survey information is collected through interviews and, for relevant components, examinations and laboratory measurements. This project uses the sleep and dietary-supplement questionnaire components; it does not collect new information or assign participants to receive supplements.
 
-The participant-data cycle used in this project is **August 2021–August 2023**. NHANES is a cross-sectional survey of the U.S. civilian, noninstitutionalized population. Official data and documentation are publicly available from the [NHANES 2021–2023 website](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023).
+Sleep information was collected in the SLQ_L questionnaire by trained interviewers, in the participant’s home or by telephone. The supplement-use information in DSQIDS_L covers products reported for the 30 days before the interview. In this NHANES cycle, the supplement interview was conducted by telephone after the first 24-hour dietary recall, and participants were asked to read information from product labels.
 
-**Download date:** 2026-10-20  
+The NHANES participant files and their documentation are publicly available through the CDC/NCHS website. The project uses public-use files, so access to the files does not require access to identifiable participant records. 
+!!However, public files include disclosure protections: some values may be grouped, recoded, or set to missing. In addition, interview participation and self-reported information can limit the completeness and precision of estimates. These data describe reported patterns in one survey cycle; because the study is observational and cross-sectional, they cannot by themselves show that supplement use causes a change in sleep.
 
-## Files needed for this project
-
-| File | What it contains |
-|---|---|
-| `DEMO_L.xpt` | Participant demographics and NHANES sample-design and weight variables. |
-| `SLQ_L.xpt` | Self-reported usual sleep and wake times, including derived weekday and weekend sleep-duration variables. |
-| `DSQIDS_L.xpt` | Individual supplement or antacid products reported during the 30 days before the interview. A participant may have multiple rows. |
-| `DSQTOT_L.xpt` | Participant-level summary of supplement and antacid use, including users and non-users. It also contains the dietary Day 1 sample weight, `WTDRD1`. |
-| `DSPI.xpt` | Reference information about supplement products. |
-| `DSII.xpt` | Reference information about ingredients listed for supplement products. |
-| `DSBI.xpt` | Reference information about ingredients listed within supplement blends. |
-
-The `DSPI`, `DSII`, and `DSBI` files are product-reference files covering products in the NHANES Dietary Supplement Database, not participant records limited to the 2021–2023 cycle. Their records are linked to reported supplements using product and ingredient IDs.
-
-## Rebuilding the analysis dataset
-
-1. Read the original `.xpt` files from this folder.
-2. Use `SEQN` (the respondent sequence number) to connect participant-level data from `DEMO_L`, `SLQ_L`, and `DSQTOT_L`.
-3. Connect reported supplement products in `DSQIDS_L` to product and ingredient information using `DSDPID`. Connect blend information using `DSDIID`.
-4. Check row counts, repeated participant records, missing values, and merge results before analysis.
-5. Apply and document the final eligibility rules, including the adult age range, before producing analysis results.
-
-NHANES recommends using the appropriate sample weights and survey-design information for population estimates. The analysis plan will document the selected weight and design variables before statistical analysis.
-
-## Data access and sharing
-
-The `.xpt` files are raw source data and should remain unchanged. Keep them in this local `data/` folder. Do not upload the large data files to GitHub; use this README, the analysis code, and official source links to document where the data came from and how to rebuild the analysis dataset.
-
-## Official documentation
-
-- [NHANES August 2021–August 2023 overview](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023)
-- [Demographics and sample weights (`DEMO_L`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DEMO_L.htm)
-- [Sleep questionnaire (`SLQ_L`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/SLQ_L.htm)
-- [Individual supplements (`DSQIDS_L`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQIDS_L.htm)
-- [Total supplements (`DSQTOT_L`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/DSQTOT_L.htm)
-- [Product information (`DSPI`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSPI.htm)
-- [Ingredient information (`DSII`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSII.htm)
-- [Blend information (`DSBI`)](https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/1999/DataFiles/DSBI.htm)
+Sources: NHANES August 2021–August 2023 sample design and analytic overview; SLQ_L documentation; DSQIDS_L documentation
