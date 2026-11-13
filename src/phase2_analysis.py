@@ -1,4 +1,5 @@
-"""Rebuild empirical event probabilities for NHANES Phase 2, tasks 1-3."""
+"""Rebuild empirical event probabilities for NHANES Phase 2, tasks 1-5."""
+from math import comb
 from pathlib import Path
 import pandas as pd
 import pyreadstat
@@ -89,6 +90,43 @@ def main() -> None:
     conditional["percent"] = 100 * conditional["conditional_probability"]
     conditional.to_csv(OUT / "conditional_probabilities.csv", index=False)
 
+    p_a = event_counts["A: any supplement use"] / n
+    p_b = event_counts["B: weekday sleep <7 hours"] / n
+    p_a_and_b = event_counts["A and B"] / n
+    independence = pd.DataFrame([{
+        "analysis_n": n,
+        "p_a": p_a,
+        "p_b": p_b,
+        "observed_p_a_and_b": p_a_and_b,
+        "expected_p_a_and_b_if_independent": p_a * p_b,
+        "observed_minus_expected_percentage_points": 100 * (p_a_and_b - p_a * p_b),
+    }])
+    independence.to_csv(OUT / "independence_comparison.csv", index=False)
+
+    # Task 5: draw ten distinct supplement users uniformly from the fixed
+    # analysis set. The exact count distribution is hypergeometric; a
+    # binomial model is close because the draw is a small fraction of users.
+    draw_n = 10
+    user_n = event_counts["A: any supplement use"]
+    short_sleep_user_n = event_counts["A and B"]
+    if user_n < draw_n:
+        raise ValueError("Not enough supplement users for the ten-person illustration")
+    p_short_sleep_user = short_sleep_user_n / user_n
+    binomial_example = pd.DataFrame([
+        {
+            "k_short_sleepers": k,
+            "binomial_probability": comb(draw_n, k) * p_short_sleep_user**k
+            * (1 - p_short_sleep_user)**(draw_n - k),
+            "exact_without_replacement_probability": (
+                comb(short_sleep_user_n, k)
+                * comb(user_n - short_sleep_user_n, draw_n - k)
+                / comb(user_n, draw_n)
+            ) if k <= short_sleep_user_n and draw_n - k <= user_n - short_sleep_user_n else 0.0,
+        }
+        for k in range(draw_n + 1)
+    ])
+    binomial_example.to_csv(OUT / "binomial_illustration.csv", index=False)
+
     print(f"Probability analysis set: {n:,} adults")
     print("Marginal and joint event probabilities:")
     print(marginal_joint.to_string(index=False, formatters={
@@ -100,6 +138,18 @@ def main() -> None:
     print(conditional.to_string(index=False, formatters={
         "conditional_probability": "{:.4f}".format, "percent": "{:.2f}%".format
     }))
+    print("\nIndependence comparison (unweighted empirical probabilities):")
+    print(independence.to_string(index=False, formatters={
+        "p_a": "{:.4f}".format,
+        "p_b": "{:.4f}".format,
+        "observed_p_a_and_b": "{:.4f}".format,
+        "expected_p_a_and_b_if_independent": "{:.4f}".format,
+        "observed_minus_expected_percentage_points": "{:.2f}".format,
+    }))
+    example_two = binomial_example.loc[binomial_example["k_short_sleepers"].eq(2)].iloc[0]
+    print(f"\nTen-person supplement-user draw: p(short sleep) = {p_short_sleep_user:.4f}")
+    print(f"P(Y=2): binomial = {example_two['binomial_probability']:.6f}; "
+          f"exact without replacement = {example_two['exact_without_replacement_probability']:.6f}")
     print(f"\nSaved tables under: {OUT}")
 
 

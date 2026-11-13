@@ -32,6 +32,12 @@ The three reference files (`DSPI`, `DSII`, `DSBI`) describe the broader NHANES D
 
 The script records merge and eligibility counts in `merge_and_eligibility_flow.csv`. Results should be checked against the component-specific eligibility and weighting guidance before population-level interpretation.
 
+## Rebuild Phase 2 probability outputs
+
+From the project root, run `python src/phase2_analysis.py` followed by `python src/phase2_extended_analysis.py`. These scripts reread `DEMO_L.xpt`, `SLQ_L.xpt`, and `DSQTOT_L.xpt`, join one record per person by `SEQN`, and write generated probability and distribution tables to `data/processed/phase2/`. Four Phase 2 PNG figures go to `figures/phase2/`. The primary unweighted probability set includes adults aged 20 or older with a valid yes/no `DSD010` response and a non-missing `SLD012` response. Numeric sleep analyses additionally require exact-hour codes; weighted comparisons require a positive `WTDRD1` weight. Each report section states its own denominator.
+
+The Phase 2 notebook is `notebooks/02_phase2_probability.ipynb`. Run `python src/build_phase2_pdf.py` after regenerating the tables and figures to rebuild the integrated `reports/phase2.pdf`. The source XPT files stay unchanged throughout.
+
 ## Access, sharing, and limitations
 
 Raw `.xpt` files should remain unchanged and local. They are excluded from Git because they are source data files and may be large. Do not upload the raw files to GitHub; use this README, code, and CDC/NCHS source links to document retrieval and reconstruction. Generated processed files are also excluded from Git. No individual-level result should be interpreted as causal: the project uses cross-sectional observational survey data and self-reported measures.
