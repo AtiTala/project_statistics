@@ -15,18 +15,22 @@ OUT.mkdir(parents=True, exist_ok=True)
 FIGURES.mkdir(parents=True, exist_ok=True)
 
 
-def read_xpt(name):
+def read_xpt(name: str) -> tuple[pd.DataFrame, pyreadstat.metadata_container]:
     path = DATA / f"{name}.xpt"
     if not path.exists():
         raise FileNotFoundError(f"Required NHANES file not found: {path}")
     try:
-        frame, meta = pyreadstat.read_xport(str(path), encoding="WINDOWS-1252")
+        frame, metadata = pyreadstat.read_xport(str(path), encoding="WINDOWS-1252", output_format="pandas")
     except UnicodeDecodeError:
-        frame, meta = pyreadstat.read_xport(str(path), encoding="LATIN1")
-    return frame, meta
+        frame, metadata = pyreadstat.read_xport(str(path), encoding="LATIN1", output_format="pandas")
+    if not isinstance(frame, pd.DataFrame):
+        raise TypeError(f"Expected a pandas DataFrame from {path}")
+    return frame, metadata
 
 
 def check_unique(frame, name):
+    if frame["SEQN"].isna().any():
+        raise ValueError(f"{name} has missing SEQN values; review participant IDs first")
     if frame["SEQN"].duplicated().any():
         raise ValueError(f"{name} has repeated SEQN values; review merge structure first")
 
@@ -64,7 +68,7 @@ def save_boxplot(frame, col, title, filename):
     d = frame[["DSD010", col]].copy()
     d["sleep_hours"] = numeric_sleep(d[col])
     d = d[d["sleep_hours"].notna() & d["DSD010"].isin([1, 2])]
-    groups = [d.loc[d.DSD010.eq(code), "sleep_hours"].values for code in (2, 1)]
+    groups = [d.loc[d["DSD010"].eq(code), "sleep_hours"].values for code in (2, 1)]
     names = [f"No supplement\n(n={len(groups[0]):,})", f"Any supplement\n(n={len(groups[1]):,})"]
     fig, ax = plt.subplots(figsize=(8, 5.5))
     ax.boxplot(groups, tick_labels=names, showfliers=False, patch_artist=True,
@@ -81,31 +85,31 @@ def save_boxplot(frame, col, title, filename):
     return d
 
 
-def main():
+def main() -> None:
     demo, _ = read_xpt("DEMO_L")
     sleep, _ = read_xpt("SLQ_L")
-    supp, supp_meta = read_xpt("DSQTOT_L")
+    supp, _ = read_xpt("DSQTOT_L")
     for f, n in ((demo, "DEMO_L"), (sleep, "SLQ_L"), (supp, "DSQTOT_L")):
         check_unique(f, n)
-    flow = [{"step": "DEMO_L", "participants": int(demo.SEQN.nunique())}]
-    merged = demo.merge(sleep, on="SEQN", how="inner", validate="one_to_one")
-    flow.append({"step": "DEMO_L + SLQ_L", "participants": int(merged.SEQN.nunique())})
-    merged = merged.merge(supp, on="SEQN", how="inner", validate="one_to_one")
-    flow.append({"step": "DEMO_L + SLQ_L + DSQTOT_L", "participants": int(merged.SEQN.nunique())})
-    adult = merged.loc[merged.RIDAGEYR.ge(20)].copy()
-    flow.append({"step": "Age 20+", "participants": int(adult.SEQN.nunique())})
+    flow = [{"step": "DEMO_L", "participants": len(demo)}]
+    merged = pd.merge(demo, sleep, on="SEQN", how="inner", validate="one_to_one")
+    flow.append({"step": "DEMO_L + SLQ_L", "participants": len(merged)})
+    merged = pd.merge(merged, supp, on="SEQN", how="inner", validate="one_to_one")
+    flow.append({"step": "DEMO_L + SLQ_L + DSQTOT_L", "participants": len(merged)})
+    adult = merged.loc[merged["RIDAGEYR"].ge(20)].copy()
+    flow.append({"step": "Age 20+", "participants": len(adult)})
     adult.to_csv(OUT / "adult_merged.csv", index=False)
 
     # Preserve NHANES special response codes in frequencies; treat them as non-numeric sleep.
-    exposure = adult.DSD010.isin([1, 2])
+    exposure = adult["DSD010"].isin([1, 2])
     exp = adult.loc[exposure].copy()
-    exp["supplement_use"] = exp.DSD010.map({1: "Yes", 2: "No"})
-    exp["weekday_hours"] = numeric_sleep(exp.SLD012)
-    exp["weekend_hours"] = numeric_sleep(exp.SLD013)
+    exp["supplement_use"] = exp["DSD010"].map({1: "Yes", 2: "No"})
+    exp["weekday_hours"] = numeric_sleep(exp["SLD012"])
+    exp["weekend_hours"] = numeric_sleep(exp["SLD013"])
 
-    weighted_adults = exp.loc[exp.WTDRD1.gt(0)].copy()
-    prevalence_yes = weighted_adults.DSD010.eq(1)
-    prevalence_weight = weighted_adults.WTDRD1
+    weighted_adults = exp.loc[exp["WTDRD1"].gt(0)].copy()
+    prevalence_yes = weighted_adults["DSD010"].eq(1)
+    prevalence_weight = weighted_adults["WTDRD1"]
     prevalence = pd.DataFrame([{"n_valid_yes_no": int(len(weighted_adults)),
         "yes_unweighted_n": int(prevalence_yes.sum()),
         "prevalence_unweighted_percent": float(prevalence_yes.mean() * 100),
@@ -125,12 +129,26 @@ def main():
     pd.DataFrame(summary_rows).to_csv(OUT / "sleep_by_supplement_summary.csv", index=False)
 
     count_rows = []
+    grouped_sleep_labels = {
+        2.0: "<3 hours (NHANES code 2)",
+        14.0: "14+ hours (NHANES code 14)",
+    }
     for col, label in (("SLD012", "Weekday/workday"), ("SLD013", "Weekend/non-workday")):
         counts = adult[col].value_counts(dropna=False).sort_index()
         total_valid = adult[col].notna().sum()
-        for value, n in counts.items():
-            code = "Missing" if pd.isna(value) else "<3 hours (NHANES code 2)" if value == 2 else "14+ hours (NHANES code 14)" if value == 14 else f"{value:g} hours"
-            count_rows.append({"measure": label, "response": code, "n": int(n), "percent_of_valid": float(n / total_valid * 100) if pd.notna(value) else np.nan})
+        for hours, n in zip(counts.index.to_numpy(dtype=float), counts.to_numpy()):
+            if np.isnan(hours):
+                response = "Missing"
+                percent_of_valid = np.nan
+            else:
+                response = grouped_sleep_labels.get(hours, f"{hours:g} hours")
+                percent_of_valid = float(n / total_valid * 100)
+            count_rows.append({
+                "measure": label,
+                "response": response,
+                "n": int(n),
+                "percent_of_valid": percent_of_valid,
+            })
     pd.DataFrame(count_rows).to_csv(OUT / "sleep_response_frequencies.csv", index=False)
 
     save_distribution(adult, "SLD012", "Usual weekday/workday sleep duration — adults aged 20+", "fig1_weekday_sleep_distribution.png")
@@ -139,7 +157,7 @@ def main():
     weekend_box = save_boxplot(exp, "SLD013", "Weekend/non-workday sleep by supplement-use status — adults aged 20+", "fig4_weekend_sleep_by_supplement.png")
 
     flow.append({"step": "Adults with valid yes/no DSD010", "participants": int(len(exp))})
-    flow.append({"step": "Adults with positive WTDRD1 among valid yes/no", "participants": int(exp.WTDRD1.gt(0).sum())})
+    flow.append({"step": "Adults with positive WTDRD1 among valid yes/no", "participants": int(exp["WTDRD1"].gt(0).sum())})
     pd.DataFrame(flow).to_csv(OUT / "merge_and_eligibility_flow.csv", index=False)
     # A small metadata record makes source versions and output scope explicit.
     metadata = {

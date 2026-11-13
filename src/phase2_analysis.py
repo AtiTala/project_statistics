@@ -14,14 +14,17 @@ def read_xpt(name: str) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"Required source file not found: {path}")
     try:
-        frame, _ = pyreadstat.read_xport(str(path), encoding="WINDOWS-1252")
+        frame, _ = pyreadstat.read_xport(str(path), encoding="WINDOWS-1252", output_format="pandas")
     except UnicodeDecodeError:
-        frame, _ = pyreadstat.read_xport(str(path), encoding="LATIN1")
+        frame, _ = pyreadstat.read_xport(str(path), encoding="LATIN1", output_format="pandas")
+    if not isinstance(frame, pd.DataFrame):
+        raise TypeError(f"Expected a pandas DataFrame from {path}")
     return frame
 
 
 def require_unique_seqn(frame: pd.DataFrame, name: str) -> None:
-    if frame["SEQN"].isna().any() or frame["SEQN"].duplicated().any():
+    seqn = frame["SEQN"]
+    if not isinstance(seqn, pd.Series) or seqn.hasnans or not seqn.is_unique:
         raise ValueError(f"{name} must contain one non-missing row per SEQN")
 
 

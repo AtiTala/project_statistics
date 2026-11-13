@@ -10,7 +10,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image, KeepTogether
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT_DIR = ROOT / "reports" / "phase1"
@@ -81,9 +81,10 @@ def render_md(path, story):
         img = re.match(r"!\[(.*?)\]\((.*?)\)", raw)
         if img:
             image_path = (path.parent / img.group(2)).resolve()
-            if image_path.exists():
-                im = Image(str(image_path), width=6.9*inch, height=4.2*inch, kind="proportional", hAlign="CENTER")
-                story.extend([im, Paragraph(inline(img.group(1)), styles["CaptionA"])])
+            if not image_path.is_file():
+                raise FileNotFoundError(f"Missing figure: {image_path}. Run src/phase1_analysis.py first.")
+            im = Image(str(image_path), width=6.9*inch, height=4.2*inch, kind="proportional", hAlign="CENTER")
+            story.extend([im, Paragraph(inline(img.group(1)), styles["CaptionA"])])
             i += 1; continue
         if raw.startswith("#"):
             level = len(raw) - len(raw.lstrip("#")); title = raw[level:].strip()
@@ -115,17 +116,28 @@ def page_num(canvas, doc):
     canvas.drawRightString(7.8*inch, .45*inch, str(doc.page))
     canvas.restoreState()
 
-files = sorted(REPORT_DIR.glob("*.md"), key=lambda p: (p.name.startswith("A"), p.name))
-story = [Paragraph("Phase 1: Study, Data, and Descriptive Statistics", styles["TitleA"]),
-         Paragraph("Sleep duration and dietary supplement use in NHANES, August 2021–August 2023", styles["CaptionA"]),
-         Spacer(1, 16)]
-for idx, path in enumerate(files):
-    if idx:
-        story.append(PageBreak())
-    render_md(path, story)
 
-doc = SimpleDocTemplate(str(OUTPUT), pagesize=letter, rightMargin=.68*inch, leftMargin=.68*inch,
-                        topMargin=.65*inch, bottomMargin=.7*inch, title="NHANES Phase 1 Report",
-                        author="Statistics Course Project")
-doc.build(story, onFirstPage=page_num, onLaterPages=page_num)
-print(f"Created {OUTPUT} ({OUTPUT.stat().st_size:,} bytes) from {len(files)} Markdown sections.")
+def main() -> None:
+    files = sorted(REPORT_DIR.glob("*.md"), key=lambda p: (p.name.startswith("A"), p.name))
+    if not files:
+        raise FileNotFoundError(f"No Phase 1 Markdown report sections found in {REPORT_DIR}")
+
+    story = [
+        Paragraph("Phase 1: Study, Data, and Descriptive Statistics", styles["TitleA"]),
+        Paragraph("Sleep duration and dietary supplement use in NHANES, August 2021–August 2023", styles["CaptionA"]),
+        Spacer(1, 16),
+    ]
+    for idx, path in enumerate(files):
+        if idx:
+            story.append(PageBreak())
+        render_md(path, story)
+
+    doc = SimpleDocTemplate(str(OUTPUT), pagesize=letter, rightMargin=.68*inch, leftMargin=.68*inch,
+                            topMargin=.65*inch, bottomMargin=.7*inch, title="NHANES Phase 1 Report",
+                            author="Statistics Course Project")
+    doc.build(story, onFirstPage=page_num, onLaterPages=page_num)
+    print(f"Created {OUTPUT} ({OUTPUT.stat().st_size:,} bytes) from {len(files)} Markdown sections.")
+
+
+if __name__ == "__main__":
+    main()
