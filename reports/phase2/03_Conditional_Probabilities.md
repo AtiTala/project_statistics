@@ -1,4 +1,4 @@
-# Phase 2.3. Conditional Probabilities
+## 03-Conditional Probabilities
 
 ## Question
 

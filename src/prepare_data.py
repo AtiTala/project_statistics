@@ -34,7 +34,7 @@ for xpt_path in xpt_files:
     csv_path = OUTPUT_DIR / f"{xpt_path.stem}.csv"
     labels_path = LABELS_DIR / f"{xpt_path.stem}_labels.json"
 
-    data.to_csv(csv_path, index=False)
+    data.to_csv(csv_path, index=False) # type: ignore
 
     with labels_path.open("w", encoding="utf-8") as file:
         json.dump(
@@ -44,7 +44,7 @@ for xpt_path in xpt_files:
             indent=2,
         )
 
-    print(f"  Saved {data.shape[0]:,} rows, {data.shape[1]} columns")
+    print(f"  Saved {data.shape[0]:,} rows, {data.shape[1]} columns") # type: ignore
     print(f"  Csv: {csv_path.name}")
     print(f"  Labels:  {labels_path.name}")
 

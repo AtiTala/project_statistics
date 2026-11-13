@@ -1,4 +1,4 @@
-# Phase 2.2. Marginal and Joint Empirical Probabilities
+## 02-Marginal and Joint Empirical Probabilities
 
 ## Analysis set
 
